@@ -299,7 +299,7 @@ export default function TradeDetail() {
               
               <div className="text-muted-foreground border-t border-border pt-2">Position</div>
               <div className="font-mono border-t border-border pt-2">{trade.plannedPositionSize || '-'}</div>
-              <div className="font-mono border-t border-border pt-2">{calc.openPositionSize || '-'}</div>
+              <div className="font-mono border-t border-border pt-2">{calc.openPositionSize ?? '-'}</div>
 
               <div className="text-muted-foreground border-t border-border pt-2">Entry Price</div>
               <div className="font-mono border-t border-border pt-2">{trade.plannedEntry || '-'}</div>

@@ -1,1 +1,2 @@
 - [API response shapes](api-response-shapes.md) — list/dashboard endpoints return specific shapes that differ from naive assumptions; key field names documented
+- [Crypto quantity units](crypto-quantity-units.md) — Binance USDT perpetual execution quantities are base-asset amounts, not abstract contract counts

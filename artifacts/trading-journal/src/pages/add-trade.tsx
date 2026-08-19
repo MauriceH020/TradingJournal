@@ -1,3 +1,4 @@
+import { useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
@@ -20,7 +21,7 @@ import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '
 import { Textarea } from '@/components/ui/textarea';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Badge } from '@/components/ui/badge';
-import { Loader2 } from 'lucide-react';
+import { Loader2, Plus, Trash2 } from 'lucide-react';
 import { toast } from 'sonner';
 
 const tradeSchema = z.object({
@@ -43,6 +44,15 @@ const tradeSchema = z.object({
 
 type TradeFormValues = z.infer<typeof tradeSchema>;
 
+type ExecutionDraft = {
+  side: 'buy' | 'sell';
+  executedAt: string;
+  price: string;
+  quantity: string;
+  commission: string;
+  fees: string;
+};
+
 export default function AddTrade() {
   const [, setLocation] = useLocation();
   const { data: accounts, isLoading: accountsLoading } = useListAccounts();
@@ -53,6 +63,7 @@ export default function AddTrade() {
   const { data: tags } = useListTags();
   
   const createTrade = useCreateTrade();
+  const [executions, setExecutions] = useState<ExecutionDraft[]>([]);
 
   const form = useForm<TradeFormValues>({
     resolver: zodResolver(tradeSchema),
@@ -64,12 +75,32 @@ export default function AddTrade() {
   });
 
   const onSubmit = (data: TradeFormValues) => {
+    const incompleteExecution = executions.find((execution) =>
+      !execution.executedAt || !execution.price || !execution.quantity,
+    );
+    if (incompleteExecution) {
+      toast.error('Complete or remove each execution before saving the trade');
+      return;
+    }
+
     // Clean up empty optional fields
     const payload = Object.fromEntries(
       Object.entries(data).filter(([_, v]) => v !== undefined && v !== null && v !== "" && (typeof v !== 'number' || !isNaN(v)))
     );
+    const instrument = instruments?.find((item) => item.id === data.instrumentId);
 
-    createTrade.mutate({ data: payload as any }, {
+    createTrade.mutate({ data: {
+      ...payload,
+      executions: executions.map((execution) => ({
+        side: execution.side,
+        executedAt: new Date(execution.executedAt).toISOString(),
+        price: Number(execution.price),
+        quantity: Number(execution.quantity),
+        quantityUnit: instrument?.quantityUnit || 'units',
+        commission: Number(execution.commission) || 0,
+        fees: Number(execution.fees) || 0,
+      })),
+    } as any }, {
       onSuccess: (trade) => {
         toast.success('Trade created successfully');
         setLocation(`/trades/${trade.id}`);
@@ -82,7 +113,19 @@ export default function AddTrade() {
   };
 
   const selectedStrategyId = form.watch('strategyId');
+  const selectedInstrumentId = form.watch('instrumentId');
   const filteredSetups = setups?.filter(s => s.strategyId === Number(selectedStrategyId)) || [];
+  const selectedInstrument = instruments?.find((instrument) => instrument.id === Number(selectedInstrumentId));
+  const addExecution = () => {
+    setExecutions((current) => [...current, {
+      side: form.getValues('direction') === 'long' ? 'buy' : 'sell',
+      executedAt: new Date().toISOString().slice(0, 16),
+      price: '',
+      quantity: '',
+      commission: '0',
+      fees: '0',
+    }]);
+  };
 
   const handleConfluenceToggle = (id: number, checked: boolean) => {
     const current = form.getValues('confluenceIds');
@@ -194,23 +237,57 @@ export default function AddTrade() {
             </CardHeader>
             <CardContent className="grid gap-4 md:grid-cols-3">
               <FormField control={form.control} name="plannedEntry" render={({ field }) => (
-                <FormItem><FormLabel>Planned Entry Price</FormLabel><FormControl><Input type="number" step="any" {...field} /></FormControl><FormMessage /></FormItem>
+                <FormItem><FormLabel>Planned Entry Price</FormLabel><FormControl><Input type="number" step="any" {...field} value={field.value ?? ''} /></FormControl><FormMessage /></FormItem>
               )} />
               <FormField control={form.control} name="initialStopLoss" render={({ field }) => (
-                <FormItem><FormLabel>Initial Stop Loss</FormLabel><FormControl><Input type="number" step="any" {...field} /></FormControl><FormMessage /></FormItem>
+                <FormItem><FormLabel>Initial Stop Loss</FormLabel><FormControl><Input type="number" step="any" {...field} value={field.value ?? ''} /></FormControl><FormMessage /></FormItem>
               )} />
               <FormField control={form.control} name="profitTarget" render={({ field }) => (
-                <FormItem><FormLabel>Profit Target</FormLabel><FormControl><Input type="number" step="any" {...field} /></FormControl><FormMessage /></FormItem>
+                <FormItem><FormLabel>Profit Target</FormLabel><FormControl><Input type="number" step="any" {...field} value={field.value ?? ''} /></FormControl><FormMessage /></FormItem>
               )} />
               <FormField control={form.control} name="plannedPositionSize" render={({ field }) => (
-                <FormItem><FormLabel>Position Size</FormLabel><FormControl><Input type="number" step="any" {...field} /></FormControl><FormMessage /></FormItem>
+                <FormItem><FormLabel>Position Size</FormLabel><FormControl><Input type="number" step="any" {...field} value={field.value ?? ''} /></FormControl><FormMessage /></FormItem>
               )} />
               <FormField control={form.control} name="plannedRisk" render={({ field }) => (
-                <FormItem><FormLabel>Risk ($)</FormLabel><FormControl><Input type="number" step="any" {...field} /></FormControl><FormMessage /></FormItem>
+                <FormItem><FormLabel>Risk ($)</FormLabel><FormControl><Input type="number" step="any" {...field} value={field.value ?? ''} /></FormControl><FormMessage /></FormItem>
               )} />
               <FormField control={form.control} name="plannedRiskPercentage" render={({ field }) => (
-                <FormItem><FormLabel>Risk (%)</FormLabel><FormControl><Input type="number" step="any" {...field} /></FormControl><FormMessage /></FormItem>
+                <FormItem><FormLabel>Risk (%)</FormLabel><FormControl><Input type="number" step="any" {...field} value={field.value ?? ''} /></FormControl><FormMessage /></FormItem>
               )} />
+            </CardContent>
+          </Card>
+
+          <Card className="bg-card">
+            <CardHeader className="flex flex-row items-center justify-between">
+              <div>
+                <CardTitle>Executions</CardTitle>
+                <p className="mt-1 text-sm text-muted-foreground">Add entry and exit fills now to save a completed trade in one step.</p>
+              </div>
+              <Button type="button" size="sm" variant="outline" onClick={addExecution}>
+                <Plus className="mr-1 h-4 w-4" /> Add execution
+              </Button>
+            </CardHeader>
+            <CardContent className="space-y-3">
+              {executions.length === 0 ? (
+                <p className="rounded-md border border-dashed border-border p-4 text-sm text-muted-foreground">
+                  No executions yet. You can also create a plan and add fills later.
+                </p>
+              ) : executions.map((execution, index) => (
+                <div key={index} className="grid gap-3 rounded-md border border-border p-3 md:grid-cols-[110px_1fr_1fr_1fr_1fr_1fr_40px]">
+                  <Select value={execution.side} onValueChange={(side: 'buy' | 'sell') => setExecutions((current) => current.map((item, itemIndex) => itemIndex === index ? { ...item, side } : item))}>
+                    <SelectTrigger><SelectValue /></SelectTrigger>
+                    <SelectContent><SelectItem value="buy">Buy</SelectItem><SelectItem value="sell">Sell</SelectItem></SelectContent>
+                  </Select>
+                  <Input aria-label={`Execution ${index + 1} date and time`} type="datetime-local" value={execution.executedAt} onChange={(event) => setExecutions((current) => current.map((item, itemIndex) => itemIndex === index ? { ...item, executedAt: event.target.value } : item))} />
+                  <Input aria-label={`Execution ${index + 1} price`} type="number" step="any" placeholder="Price" value={execution.price} onChange={(event) => setExecutions((current) => current.map((item, itemIndex) => itemIndex === index ? { ...item, price: event.target.value } : item))} />
+                  <Input aria-label={`Execution ${index + 1} quantity`} type="number" step="any" placeholder={`Quantity${selectedInstrument ? ` (${selectedInstrument.quantityUnit})` : ''}`} value={execution.quantity} onChange={(event) => setExecutions((current) => current.map((item, itemIndex) => itemIndex === index ? { ...item, quantity: event.target.value } : item))} />
+                  <Input aria-label={`Execution ${index + 1} commission`} type="number" step="any" placeholder="Commission" value={execution.commission} onChange={(event) => setExecutions((current) => current.map((item, itemIndex) => itemIndex === index ? { ...item, commission: event.target.value } : item))} />
+                  <Input aria-label={`Execution ${index + 1} fees`} type="number" step="any" placeholder="Fees" value={execution.fees} onChange={(event) => setExecutions((current) => current.map((item, itemIndex) => itemIndex === index ? { ...item, fees: event.target.value } : item))} />
+                  <Button type="button" variant="ghost" size="icon" aria-label={`Remove execution ${index + 1}`} onClick={() => setExecutions((current) => current.filter((_, itemIndex) => itemIndex !== index))}>
+                    <Trash2 className="h-4 w-4 text-destructive" />
+                  </Button>
+                </div>
+              ))}
             </CardContent>
           </Card>
 
@@ -268,7 +345,7 @@ export default function AddTrade() {
               <FormField control={form.control} name="tradeLevelCostAdjustment" render={({ field }) => (
                 <FormItem>
                   <FormLabel>Cost Adjustment (Funding/Swaps)</FormLabel>
-                  <FormControl><Input type="number" step="any" {...field} className="max-w-xs" /></FormControl>
+                  <FormControl><Input type="number" step="any" {...field} value={field.value ?? ''} className="max-w-xs" /></FormControl>
                   <FormMessage />
                 </FormItem>
               )} />
@@ -276,7 +353,7 @@ export default function AddTrade() {
               <FormField control={form.control} name="notes" render={({ field }) => (
                 <FormItem>
                   <FormLabel>Notes</FormLabel>
-                  <FormControl><Textarea rows={4} {...field} /></FormControl>
+                  <FormControl><Textarea rows={4} {...field} value={field.value ?? ''} /></FormControl>
                   <FormMessage />
                 </FormItem>
               )} />
