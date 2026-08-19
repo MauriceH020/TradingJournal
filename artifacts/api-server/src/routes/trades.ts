@@ -16,6 +16,8 @@ import { calcTradeWithDates } from "../lib/calc";
 
 const router = Router();
 
+type TradeSortKey = "createdAt" | "openedAt" | "instrument" | "direction" | "size" | "avgEntry" | "avgExit" | "netPnl" | "actualR" | "status";
+
 // ── LIST ─────────────────────────────────────────────────────────────────────
 router.get("/trades", async (req, res) => {
   const {
@@ -142,21 +144,36 @@ router.get("/trades", async (req, res) => {
   const total = summaries.length;
 
   // Sort
-  summaries.sort((a, b) => {
-    let aVal: unknown, bVal: unknown;
-    if (sortBy === "openedAt") {
-      aVal = a.calculated.openedAt?.getTime() ?? 0;
-      bVal = b.calculated.openedAt?.getTime() ?? 0;
-    } else if (sortBy === "netPnl") {
-      aVal = a.calculated.realizedNetPnl;
-      bVal = b.calculated.realizedNetPnl;
-    } else if (sortBy === "instrument") {
-      aVal = a.instrumentSymbol;
-      bVal = b.instrumentSymbol;
-    } else {
-      aVal = (a as any)[sortBy] ?? 0;
-      bVal = (b as any)[sortBy] ?? 0;
+  const getSortValue = (summary: (typeof summaries)[number]): string | number => {
+    switch (sortBy as TradeSortKey) {
+      case "createdAt":
+        return summary.createdAt?.getTime() ?? 0;
+      case "openedAt":
+        return summary.calculated.openedAt?.getTime() ?? 0;
+      case "instrument":
+        return summary.instrumentSymbol;
+      case "direction":
+        return summary.direction;
+      case "size":
+        return summary.calculated.openPositionSize + summary.calculated.realizedQuantity;
+      case "avgEntry":
+        return summary.calculated.avgEntry ?? 0;
+      case "avgExit":
+        return summary.calculated.avgExit ?? 0;
+      case "netPnl":
+        return summary.calculated.realizedNetPnl;
+      case "actualR":
+        return summary.calculated.actualR ?? 0;
+      case "status":
+        return summary.status;
+      default:
+        return summary.calculated.openedAt?.getTime() ?? 0;
     }
+  };
+
+  summaries.sort((a, b) => {
+    const aVal = getSortValue(a);
+    const bVal = getSortValue(b);
     if (typeof aVal === "number" && typeof bVal === "number") {
       return sortDir === "desc" ? bVal - aVal : aVal - bVal;
     }

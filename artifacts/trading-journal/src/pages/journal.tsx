@@ -13,8 +13,47 @@ import { format } from 'date-fns';
 import { Link, useLocation } from 'wouter';
 import { Badge } from '@/components/ui/badge';
 import { Skeleton } from '@/components/ui/skeleton';
-import { Filter, Search, ChevronRight, ChevronLeft, ChevronDown, ChevronUp } from 'lucide-react';
+import { Filter, Search, ChevronRight, ChevronLeft, ChevronDown, ChevronUp, ArrowDown, ArrowUp, ArrowUpDown } from 'lucide-react';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
+
+type SortKey = 'createdAt' | 'openedAt' | 'instrument' | 'direction' | 'size' | 'avgEntry' | 'avgExit' | 'netPnl' | 'actualR' | 'status';
+type SortDirection = 'asc' | 'desc';
+
+function SortHeader({
+  label,
+  sortKey,
+  currentSortKey,
+  currentSortDirection,
+  onSort,
+  align = 'left',
+}: {
+  label: string;
+  sortKey: SortKey;
+  currentSortKey: SortKey;
+  currentSortDirection: SortDirection;
+  onSort: (sortKey: SortKey) => void;
+  align?: 'left' | 'right';
+}) {
+  const isActive = currentSortKey === sortKey;
+  const Icon = !isActive ? ArrowUpDown : currentSortDirection === 'asc' ? ArrowUp : ArrowDown;
+
+  return (
+    <th
+      className={`px-4 py-3 ${align === 'right' ? 'text-right' : 'text-left'}`}
+      aria-sort={isActive ? (currentSortDirection === 'asc' ? 'ascending' : 'descending') : 'none'}
+    >
+      <button
+        type="button"
+        className={`inline-flex items-center gap-1.5 font-semibold transition-colors hover:text-foreground ${align === 'right' ? 'justify-end' : ''} ${isActive ? 'text-foreground' : ''}`}
+        onClick={() => onSort(sortKey)}
+        aria-label={`Sort by ${label}`}
+      >
+        {label}
+        <Icon className="h-3.5 w-3.5" />
+      </button>
+    </th>
+  );
+}
 
 function formatCurrency(val: number | null | undefined, currency = 'USD') {
   if (val == null) return '-';
@@ -42,6 +81,8 @@ export default function Journal() {
     strategyId: 'all'
   });
   const [page, setPage] = useState(1);
+  const [sortKey, setSortKey] = useState<SortKey>('createdAt');
+  const [sortDirection, setSortDirection] = useState<SortDirection>('desc');
   const limit = 20;
 
   const { data: accounts } = useListAccounts();
@@ -57,6 +98,8 @@ export default function Journal() {
     ...(filters.status !== 'all' && { status: filters.status as any }),
     ...(filters.outcome !== 'all' && { outcome: filters.outcome as any }),
     ...(filters.strategyId !== 'all' && { strategyId: Number(filters.strategyId) }),
+    sortBy: sortKey,
+    sortDir: sortDirection,
   };
 
   const { data: tradesPage, isLoading } = useListTrades(queryParams);
@@ -64,6 +107,16 @@ export default function Journal() {
   
   const handleFilterChange = (key: string, value: string) => {
     setFilters(prev => ({ ...prev, [key]: value }));
+    setPage(1);
+  };
+
+  const handleSort = (nextSortKey: SortKey) => {
+    if (nextSortKey === sortKey) {
+      setSortDirection((current) => current === 'asc' ? 'desc' : 'asc');
+    } else {
+      setSortKey(nextSortKey);
+      setSortDirection('desc');
+    }
     setPage(1);
   };
 
@@ -169,15 +222,16 @@ export default function Journal() {
           <table className="w-full text-sm text-left">
             <thead className="text-xs text-muted-foreground uppercase bg-accent/30 border-b border-border">
               <tr>
-                <th className="px-4 py-3">Date Opened</th>
-                <th className="px-4 py-3">Symbol</th>
-                <th className="px-4 py-3">Dir</th>
-                <th className="px-4 py-3 text-right">Size</th>
-                <th className="px-4 py-3 text-right">Avg Entry</th>
-                <th className="px-4 py-3 text-right">Avg Exit</th>
-                <th className="px-4 py-3 text-right">Net P&L</th>
-                <th className="px-4 py-3 text-right">R</th>
-                <th className="px-4 py-3">Status</th>
+                <SortHeader label="Date Added" sortKey="createdAt" currentSortKey={sortKey} currentSortDirection={sortDirection} onSort={handleSort} />
+                <SortHeader label="Date Opened" sortKey="openedAt" currentSortKey={sortKey} currentSortDirection={sortDirection} onSort={handleSort} />
+                <SortHeader label="Symbol" sortKey="instrument" currentSortKey={sortKey} currentSortDirection={sortDirection} onSort={handleSort} />
+                <SortHeader label="Dir" sortKey="direction" currentSortKey={sortKey} currentSortDirection={sortDirection} onSort={handleSort} />
+                <SortHeader label="Size" sortKey="size" currentSortKey={sortKey} currentSortDirection={sortDirection} onSort={handleSort} align="right" />
+                <SortHeader label="Avg Entry" sortKey="avgEntry" currentSortKey={sortKey} currentSortDirection={sortDirection} onSort={handleSort} align="right" />
+                <SortHeader label="Avg Exit" sortKey="avgExit" currentSortKey={sortKey} currentSortDirection={sortDirection} onSort={handleSort} align="right" />
+                <SortHeader label="Net P&L" sortKey="netPnl" currentSortKey={sortKey} currentSortDirection={sortDirection} onSort={handleSort} align="right" />
+                <SortHeader label="R" sortKey="actualR" currentSortKey={sortKey} currentSortDirection={sortDirection} onSort={handleSort} align="right" />
+                <SortHeader label="Status" sortKey="status" currentSortKey={sortKey} currentSortDirection={sortDirection} onSort={handleSort} />
                 <th className="px-4 py-3">Actions</th>
               </tr>
             </thead>
@@ -185,18 +239,18 @@ export default function Journal() {
               {isLoading ? (
                 [...Array(5)].map((_, i) => (
                   <tr key={i}>
-                    <td colSpan={10} className="px-4 py-4"><Skeleton className="h-6 w-full" /></td>
+                    <td colSpan={11} className="px-4 py-4"><Skeleton className="h-6 w-full" /></td>
                   </tr>
                 ))
               ) : trades.length === 0 ? (
                 <tr>
-                  <td colSpan={10} className="px-4 py-8 text-center text-muted-foreground">
+                  <td colSpan={11} className="px-4 py-8 text-center text-muted-foreground">
                     No trades found matching filters.
                   </td>
                 </tr>
               ) : (
                 trades.map((trade: any) => {
-                  const netPnl = trade.calculated?.netPnl;
+                  const netPnl = trade.calculated?.realizedNetPnl;
                   const isPos = netPnl > 0;
                   const isNeg = netPnl < 0;
                   const currency = trade.settlementCurrency || 'USD';
@@ -207,6 +261,7 @@ export default function Journal() {
                       className="hover:bg-accent/30 transition-colors cursor-pointer"
                       onClick={() => setLocation(`/trades/${trade.id}`)}
                     >
+                      <td className="px-4 py-3 whitespace-nowrap">{trade.createdAt ? format(new Date(trade.createdAt), 'MMM dd, HH:mm') : '-'}</td>
                       <td className="px-4 py-3 whitespace-nowrap">{trade.calculated?.openedAt ? format(new Date(trade.calculated.openedAt), 'MMM dd, HH:mm') : '-'}</td>
                       <td className="px-4 py-3 font-medium whitespace-nowrap">{trade.instrumentSymbol}</td>
                       <td className="px-4 py-3">
