@@ -1471,10 +1471,11 @@ components:
     TradeCalculated:
       type: object
       description: Values derived from executions — never stored, always computed
-      required: [avgEntry, openPositionSize, realizedGrossPnl, realizedNetPnl, totalCommissions, totalFees, tradeLevelCosts, openedAt]
+      required: [avgEntry, positionValue, openPositionSize, realizedGrossPnl, realizedNetPnl, totalCommissions, totalFees, tradeLevelCosts, openedAt]
       properties:
         avgEntry: { type: ["number", "null"] }
         avgExit: { type: ["number", "null"] }
+        positionValue: { type: ["number", "null"], description: Total entry position notional in the settlement currency }
         openPositionSize: { type: number }
         realizedQuantity: { type: number }
         realizedGrossPnl: { type: number }

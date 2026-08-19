@@ -15,6 +15,11 @@ export interface TradeCalculated {
   avgEntry: number | null;
   /** @nullable */
   avgExit?: number | null;
+  /**
+     * Total entry position notional in the settlement currency
+     * @nullable
+     */
+  positionValue: number | null;
   openPositionSize: number;
   realizedQuantity?: number;
   realizedGrossPnl: number;

@@ -700,6 +700,7 @@ export const ListTradesResponse = zod.object({
   "calculated": zod.object({
   "avgEntry": zod.number().nullable(),
   "avgExit": zod.number().nullish(),
+  "positionValue": zod.number().nullable().describe('Total entry position notional in the settlement currency'),
   "openPositionSize": zod.number(),
   "realizedQuantity": zod.number().optional(),
   "realizedGrossPnl": zod.number(),
@@ -782,6 +783,7 @@ export const CreateTradeResponse = zod.object({
   "calculated": zod.object({
   "avgEntry": zod.number().nullable(),
   "avgExit": zod.number().nullish(),
+  "positionValue": zod.number().nullable().describe('Total entry position notional in the settlement currency'),
   "openPositionSize": zod.number(),
   "realizedQuantity": zod.number().optional(),
   "realizedGrossPnl": zod.number(),
@@ -876,6 +878,7 @@ export const GetTradeResponse = zod.object({
   "calculated": zod.object({
   "avgEntry": zod.number().nullable(),
   "avgExit": zod.number().nullish(),
+  "positionValue": zod.number().nullable().describe('Total entry position notional in the settlement currency'),
   "openPositionSize": zod.number(),
   "realizedQuantity": zod.number().optional(),
   "realizedGrossPnl": zod.number(),
@@ -984,6 +987,7 @@ export const UpdateTradeResponse = zod.object({
   "calculated": zod.object({
   "avgEntry": zod.number().nullable(),
   "avgExit": zod.number().nullish(),
+  "positionValue": zod.number().nullable().describe('Total entry position notional in the settlement currency'),
   "openPositionSize": zod.number(),
   "realizedQuantity": zod.number().optional(),
   "realizedGrossPnl": zod.number(),
@@ -1092,6 +1096,7 @@ export const SetTradeConfluencesResponse = zod.object({
   "calculated": zod.object({
   "avgEntry": zod.number().nullable(),
   "avgExit": zod.number().nullish(),
+  "positionValue": zod.number().nullable().describe('Total entry position notional in the settlement currency'),
   "openPositionSize": zod.number(),
   "realizedQuantity": zod.number().optional(),
   "realizedGrossPnl": zod.number(),
@@ -1190,6 +1195,7 @@ export const SetTradeTagsResponse = zod.object({
   "calculated": zod.object({
   "avgEntry": zod.number().nullable(),
   "avgExit": zod.number().nullish(),
+  "positionValue": zod.number().nullable().describe('Total entry position notional in the settlement currency'),
   "openPositionSize": zod.number(),
   "realizedQuantity": zod.number().optional(),
   "realizedGrossPnl": zod.number(),
@@ -1295,6 +1301,7 @@ export const CreateExecutionResponse = zod.object({
   "calculated": zod.object({
   "avgEntry": zod.number().nullable(),
   "avgExit": zod.number().nullish(),
+  "positionValue": zod.number().nullable().describe('Total entry position notional in the settlement currency'),
   "openPositionSize": zod.number(),
   "realizedQuantity": zod.number().optional(),
   "realizedGrossPnl": zod.number(),
@@ -1400,6 +1407,7 @@ export const UpdateExecutionResponse = zod.object({
   "calculated": zod.object({
   "avgEntry": zod.number().nullable(),
   "avgExit": zod.number().nullish(),
+  "positionValue": zod.number().nullable().describe('Total entry position notional in the settlement currency'),
   "openPositionSize": zod.number(),
   "realizedQuantity": zod.number().optional(),
   "realizedGrossPnl": zod.number(),
@@ -1494,6 +1502,7 @@ export const DeleteExecutionResponse = zod.object({
   "calculated": zod.object({
   "avgEntry": zod.number().nullable(),
   "avgExit": zod.number().nullish(),
+  "positionValue": zod.number().nullable().describe('Total entry position notional in the settlement currency'),
   "openPositionSize": zod.number(),
   "realizedQuantity": zod.number().optional(),
   "realizedGrossPnl": zod.number(),
@@ -1753,6 +1762,7 @@ export const GetDashboardRecentTradesResponseItem = zod.object({
   "calculated": zod.object({
   "avgEntry": zod.number().nullable(),
   "avgExit": zod.number().nullish(),
+  "positionValue": zod.number().nullable().describe('Total entry position notional in the settlement currency'),
   "openPositionSize": zod.number(),
   "realizedQuantity": zod.number().optional(),
   "realizedGrossPnl": zod.number(),

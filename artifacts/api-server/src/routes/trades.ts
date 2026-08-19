@@ -155,7 +155,7 @@ router.get("/trades", async (req, res) => {
       case "direction":
         return summary.direction;
       case "size":
-        return summary.calculated.openPositionSize + summary.calculated.realizedQuantity;
+        return summary.calculated.positionValue ?? 0;
       case "avgEntry":
         return summary.calculated.avgEntry ?? 0;
       case "avgExit":

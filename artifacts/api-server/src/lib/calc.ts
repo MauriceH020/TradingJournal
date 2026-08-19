@@ -21,6 +21,7 @@ export type TradeCalcInput = {
 export type TradeCalcResult = {
   avgEntry: number | null;
   avgExit: number | null;
+  positionValue: number | null;
   openPositionSize: number;
   realizedQuantity: number;
   realizedGrossPnl: number;
@@ -67,6 +68,7 @@ export function calcTrade(input: TradeCalcInput): TradeCalcResult {
     totalEntryValue = totalEntryValue.plus(qty.times(price));
   }
   const avgEntry = totalEntryQty.isZero() ? null : totalEntryValue.div(totalEntryQty);
+  const positionValue = avgEntry ? avgEntry.times(totalEntryQty).times(mult) : null;
 
   // Weighted average exit
   let totalExitQty = new Decimal(0);
@@ -134,6 +136,7 @@ export function calcTrade(input: TradeCalcInput): TradeCalcResult {
   return {
     avgEntry: avgEntry?.toNumber() ?? null,
     avgExit: avgExit?.toNumber() ?? null,
+    positionValue: positionValue?.toNumber() ?? null,
     openPositionSize: openPositionSize.toNumber(),
     realizedQuantity: realizedQty.toNumber(),
     realizedGrossPnl: realizedGrossPnl.toNumber(),

@@ -226,7 +226,7 @@ export default function Journal() {
                 <SortHeader label="Date Opened" sortKey="openedAt" currentSortKey={sortKey} currentSortDirection={sortDirection} onSort={handleSort} />
                 <SortHeader label="Symbol" sortKey="instrument" currentSortKey={sortKey} currentSortDirection={sortDirection} onSort={handleSort} />
                 <SortHeader label="Dir" sortKey="direction" currentSortKey={sortKey} currentSortDirection={sortDirection} onSort={handleSort} />
-                <SortHeader label="Size" sortKey="size" currentSortKey={sortKey} currentSortDirection={sortDirection} onSort={handleSort} align="right" />
+                <SortHeader label="Position Size" sortKey="size" currentSortKey={sortKey} currentSortDirection={sortDirection} onSort={handleSort} align="right" />
                 <SortHeader label="Avg Entry" sortKey="avgEntry" currentSortKey={sortKey} currentSortDirection={sortDirection} onSort={handleSort} align="right" />
                 <SortHeader label="Avg Exit" sortKey="avgExit" currentSortKey={sortKey} currentSortDirection={sortDirection} onSort={handleSort} align="right" />
                 <SortHeader label="Net P&L" sortKey="netPnl" currentSortKey={sortKey} currentSortDirection={sortDirection} onSort={handleSort} align="right" />
@@ -269,7 +269,7 @@ export default function Journal() {
                           {trade.direction.toUpperCase()}
                         </Badge>
                       </td>
-                      <td className="px-4 py-3 text-right font-mono">{trade.calculated?.openPositionSize != null ? formatNumber(trade.calculated.openPositionSize + (trade.calculated.realizedQuantity ?? 0), 2) : (trade.plannedPositionSize ?? '-')}</td>
+                      <td className="px-4 py-3 text-right font-mono">{formatCurrency(trade.calculated?.positionValue, currency)}</td>
                       <td className="px-4 py-3 text-right font-mono">{formatNumber(trade.calculated?.avgEntry, 4)}</td>
                       <td className="px-4 py-3 text-right font-mono">{formatNumber(trade.calculated?.avgExit, 4)}</td>
                       <td className={`px-4 py-3 text-right font-mono font-bold ${isPos ? 'text-primary' : isNeg ? 'text-destructive' : ''}`}>
