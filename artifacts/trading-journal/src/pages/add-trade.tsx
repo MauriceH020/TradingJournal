@@ -82,7 +82,7 @@ export default function AddTrade() {
   };
 
   const selectedStrategyId = form.watch('strategyId');
-  const filteredSetups = setups?.filter(s => s.strategyId === selectedStrategyId) || [];
+  const filteredSetups = setups?.filter(s => s.strategyId === Number(selectedStrategyId)) || [];
 
   const handleConfluenceToggle = (id: number, checked: boolean) => {
     const current = form.getValues('confluenceIds');

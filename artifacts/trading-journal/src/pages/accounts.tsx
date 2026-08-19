@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { 
   useListAccounts, 
   useCreateAccount, 
+  useUpdateAccount,
   useDeleteAccount,
   useListInstruments,
   useCreateInstrument,
@@ -12,7 +13,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
-import { Plus, Trash2, Loader2, Wallet } from 'lucide-react';
+import { Plus, Trash2, Loader2, Wallet, Pencil } from 'lucide-react';
 import { useQueryClient } from '@tanstack/react-query';
 import { toast } from 'sonner';
 
@@ -32,6 +33,7 @@ export default function Accounts() {
   const { data: instruments, isLoading: instLoading } = useListInstruments();
 
   const createAccount = useCreateAccount();
+  const updateAccount = useUpdateAccount();
   const deleteAccount = useDeleteAccount();
   const createInstrument = useCreateInstrument();
   const deleteInstrument = useDeleteInstrument();
@@ -39,8 +41,32 @@ export default function Accounts() {
   const [accDialog, setAccDialog] = useState(false);
   const [newAcc, setNewAcc] = useState({ name: '', broker: '', baseCurrency: 'USD', startingBalance: '' });
 
+  const [editAccDialog, setEditAccDialog] = useState(false);
+  const [editAcc, setEditAcc] = useState<{ id: number; name: string; broker: string; baseCurrency: string; currentBalance: string } | null>(null);
+
   const [instDialog, setInstDialog] = useState(false);
   const [newInst, setNewInst] = useState({ symbol: '', name: '', assetClass: 'Forex', settlementCurrency: 'USD', quantityUnit: 'Lots' });
+
+  const handleUpdateAccount = () => {
+    if (!editAcc) return;
+    updateAccount.mutate({
+      id: editAcc.id,
+      data: {
+        name: editAcc.name,
+        broker: editAcc.broker,
+        baseCurrency: editAcc.baseCurrency,
+        currentBalance: editAcc.currentBalance ? Number(editAcc.currentBalance) : undefined,
+      }
+    }, {
+      onSuccess: () => {
+        toast.success("Account updated");
+        setEditAccDialog(false);
+        setEditAcc(null);
+        queryClient.invalidateQueries({ queryKey: ['listAccounts'] });
+      },
+      onError: () => toast.error("Failed to update account")
+    });
+  };
 
   const handleCreateAccount = () => {
     createAccount.mutate({ 
@@ -104,6 +130,27 @@ export default function Accounts() {
           </Dialog>
         </div>
 
+        {/* Edit Account Dialog */}
+        <Dialog open={editAccDialog} onOpenChange={setEditAccDialog}>
+          <DialogContent>
+            <DialogHeader><DialogTitle>Edit Account</DialogTitle></DialogHeader>
+            {editAcc && (
+              <div className="space-y-4 py-4">
+                <div className="space-y-2"><Label>Name *</Label><Input value={editAcc.name} onChange={e => setEditAcc({...editAcc, name: e.target.value})} /></div>
+                <div className="space-y-2"><Label>Broker</Label><Input value={editAcc.broker} onChange={e => setEditAcc({...editAcc, broker: e.target.value})} /></div>
+                <div className="grid grid-cols-2 gap-4">
+                  <div className="space-y-2"><Label>Base Currency</Label><Input value={editAcc.baseCurrency} onChange={e => setEditAcc({...editAcc, baseCurrency: e.target.value})} /></div>
+                  <div className="space-y-2"><Label>Current Balance</Label><Input type="number" step="any" value={editAcc.currentBalance} onChange={e => setEditAcc({...editAcc, currentBalance: e.target.value})} /></div>
+                </div>
+                <Button onClick={handleUpdateAccount} disabled={!editAcc.name || updateAccount.isPending}>
+                  {updateAccount.isPending && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                  Save Changes
+                </Button>
+              </div>
+            )}
+          </DialogContent>
+        </Dialog>
+
         <div className="grid gap-4 md:grid-cols-2">
           {accounts?.map(acc => (
             <Card key={acc.id} className="bg-card">
@@ -115,14 +162,20 @@ export default function Accounts() {
                     <CardDescription>{acc.broker || 'No broker specified'}</CardDescription>
                   </div>
                 </div>
-                <Button variant="ghost" size="icon" onClick={() => {
-                  if (confirm('Delete account? This may fail if it has trades.')) {
-                    deleteAccount.mutate({ id: acc.id }, {
-                      onSuccess: () => { toast.success("Deleted"); queryClient.invalidateQueries({ queryKey: ['listAccounts'] }); },
-                      onError: () => toast.error("Cannot delete account with existing trades")
-                    });
-                  }
-                }}><Trash2 className="w-4 h-4 text-destructive" /></Button>
+                <div className="flex gap-1">
+                  <Button variant="ghost" size="icon" onClick={() => {
+                    setEditAcc({ id: acc.id, name: acc.name, broker: acc.broker || '', baseCurrency: acc.baseCurrency, currentBalance: (acc.currentBalance ?? acc.startingBalance ?? '').toString() });
+                    setEditAccDialog(true);
+                  }}><Pencil className="w-4 h-4 text-muted-foreground" /></Button>
+                  <Button variant="ghost" size="icon" onClick={() => {
+                    if (confirm('Delete account? This may fail if it has trades.')) {
+                      deleteAccount.mutate({ id: acc.id }, {
+                        onSuccess: () => { toast.success("Deleted"); queryClient.invalidateQueries({ queryKey: ['listAccounts'] }); },
+                        onError: () => toast.error("Cannot delete account with existing trades")
+                      });
+                    }
+                  }}><Trash2 className="w-4 h-4 text-destructive" /></Button>
+                </div>
               </CardHeader>
               <CardContent className="pt-2">
                 <div className="grid grid-cols-2 gap-4 text-sm mt-2">
