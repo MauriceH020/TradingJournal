@@ -1,0 +1,1 @@
+- [API response shapes](api-response-shapes.md) — list/dashboard endpoints return specific shapes that differ from naive assumptions; key field names documented

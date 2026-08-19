@@ -1,0 +1,28 @@
+kind = "web"
+previewPath = "/"
+title = "Trading Journal"
+description = "A personal trading journal web application for an active discretionary trader. Supports multiple accounts, instruments (CFD, crypto), execution-based trade logging with weighted-average position accounting, structured confluences, strategies, and setups. Includes a full-featured journal with filtering, a dashboard with performance analytics, and detailed trade review workflows."
+version = "1.0.0"
+id = "artifacts/trading-journal"
+router = "path"
+
+[[services]]
+name = "web"
+paths = [ "/" ]
+localPort = 21194
+
+[services.development]
+run = "pnpm --filter @workspace/trading-journal run dev"
+
+[services.production]
+build = [ "pnpm", "--filter", "@workspace/trading-journal", "run", "build" ]
+serve = "static"
+publicDir = "artifacts/trading-journal/dist/public"
+
+[[services.production.rewrites]]
+from = "/*"
+to = "/index.html"
+
+[services.env]
+PORT = "21194"
+BASE_PATH = "/"

@@ -3,20 +3,42 @@ info:
   # Do not change the title, if the title changes, the import paths will be broken
   title: Api
   version: 0.1.0
-  description: API specification
+  description: Trading Journal API
 servers:
   - url: /api
     description: Base API path
 tags:
   - name: health
     description: Health operations
+  - name: accounts
+    description: Trading accounts
+  - name: instruments
+    description: Tradeable instruments
+  - name: strategies
+    description: Trading strategies
+  - name: setups
+    description: Trade setups (belong to strategies)
+  - name: confluences
+    description: Confluence categories and items
+  - name: tags
+    description: Free-form trade tags
+  - name: trades
+    description: Trade journal entries
+  - name: executions
+    description: Individual trade executions/fills
+  - name: reviews
+    description: Post-trade reviews
+  - name: dashboard
+    description: Dashboard analytics and statistics
+  - name: settings
+    description: Application settings
+
 paths:
   /healthz:
     get:
       operationId: healthCheck
       tags: [health]
       summary: Health check
-      description: Returns server health status
       responses:
         "200":
           description: Healthy
@@ -24,6 +46,1137 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/HealthStatus"
+
+  # ─── ACCOUNTS ───────────────────────────────────────────────────────────────
+  /accounts:
+    get:
+      operationId: listAccounts
+      tags: [accounts]
+      summary: List all accounts
+      parameters:
+        - name: isActive
+          in: query
+          schema:
+            type: boolean
+      responses:
+        "200":
+          description: List of accounts
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Account"
+    post:
+      operationId: createAccount
+      tags: [accounts]
+      summary: Create an account
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/AccountInput"
+      responses:
+        "201":
+          description: Created
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Account"
+
+  /accounts/{id}:
+    get:
+      operationId: getAccount
+      tags: [accounts]
+      summary: Get account by ID
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Account
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Account"
+        "404":
+          description: Not found
+    patch:
+      operationId: updateAccount
+      tags: [accounts]
+      summary: Update account
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/AccountUpdate"
+      responses:
+        "200":
+          description: Updated
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Account"
+        "404":
+          description: Not found
+    delete:
+      operationId: deleteAccount
+      tags: [accounts]
+      summary: Delete account
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "204":
+          description: Deleted
+        "404":
+          description: Not found
+
+  # ─── INSTRUMENTS ────────────────────────────────────────────────────────────
+  /instruments:
+    get:
+      operationId: listInstruments
+      tags: [instruments]
+      summary: List instruments
+      parameters:
+        - name: assetClass
+          in: query
+          schema:
+            type: string
+        - name: isActive
+          in: query
+          schema:
+            type: boolean
+      responses:
+        "200":
+          description: List of instruments
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Instrument"
+    post:
+      operationId: createInstrument
+      tags: [instruments]
+      summary: Create an instrument
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/InstrumentInput"
+      responses:
+        "201":
+          description: Created
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Instrument"
+
+  /instruments/{id}:
+    get:
+      operationId: getInstrument
+      tags: [instruments]
+      summary: Get instrument by ID
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Instrument
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Instrument"
+        "404":
+          description: Not found
+    patch:
+      operationId: updateInstrument
+      tags: [instruments]
+      summary: Update instrument
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/InstrumentUpdate"
+      responses:
+        "200":
+          description: Updated
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Instrument"
+        "404":
+          description: Not found
+    delete:
+      operationId: deleteInstrument
+      tags: [instruments]
+      summary: Delete instrument
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "204":
+          description: Deleted
+        "404":
+          description: Not found
+
+  # ─── STRATEGIES ─────────────────────────────────────────────────────────────
+  /strategies:
+    get:
+      operationId: listStrategies
+      tags: [strategies]
+      summary: List strategies
+      responses:
+        "200":
+          description: List of strategies
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Strategy"
+    post:
+      operationId: createStrategy
+      tags: [strategies]
+      summary: Create a strategy
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/StrategyInput"
+      responses:
+        "201":
+          description: Created
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Strategy"
+
+  /strategies/{id}:
+    get:
+      operationId: getStrategy
+      tags: [strategies]
+      summary: Get strategy by ID
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Strategy
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Strategy"
+        "404":
+          description: Not found
+    patch:
+      operationId: updateStrategy
+      tags: [strategies]
+      summary: Update strategy
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/StrategyUpdate"
+      responses:
+        "200":
+          description: Updated
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Strategy"
+        "404":
+          description: Not found
+    delete:
+      operationId: deleteStrategy
+      tags: [strategies]
+      summary: Delete strategy
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "204":
+          description: Deleted
+        "404":
+          description: Not found
+
+  # ─── SETUPS ─────────────────────────────────────────────────────────────────
+  /setups:
+    get:
+      operationId: listSetups
+      tags: [setups]
+      summary: List setups
+      parameters:
+        - name: strategyId
+          in: query
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: List of setups
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Setup"
+    post:
+      operationId: createSetup
+      tags: [setups]
+      summary: Create a setup
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/SetupInput"
+      responses:
+        "201":
+          description: Created
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Setup"
+
+  /setups/{id}:
+    patch:
+      operationId: updateSetup
+      tags: [setups]
+      summary: Update setup
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/SetupUpdate"
+      responses:
+        "200":
+          description: Updated
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Setup"
+        "404":
+          description: Not found
+    delete:
+      operationId: deleteSetup
+      tags: [setups]
+      summary: Delete setup
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "204":
+          description: Deleted
+        "404":
+          description: Not found
+
+  # ─── CONFLUENCE CATEGORIES ───────────────────────────────────────────────────
+  /confluence-categories:
+    get:
+      operationId: listConfluenceCategories
+      tags: [confluences]
+      summary: List confluence categories with their confluences
+      responses:
+        "200":
+          description: List of categories with confluences
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/ConfluenceCategory"
+    post:
+      operationId: createConfluenceCategory
+      tags: [confluences]
+      summary: Create a confluence category
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ConfluenceCategoryInput"
+      responses:
+        "201":
+          description: Created
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ConfluenceCategory"
+
+  /confluence-categories/{id}:
+    patch:
+      operationId: updateConfluenceCategory
+      tags: [confluences]
+      summary: Update confluence category
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ConfluenceCategoryUpdate"
+      responses:
+        "200":
+          description: Updated
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ConfluenceCategory"
+        "404":
+          description: Not found
+    delete:
+      operationId: deleteConfluenceCategory
+      tags: [confluences]
+      summary: Delete confluence category
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "204":
+          description: Deleted
+        "404":
+          description: Not found
+
+  # ─── CONFLUENCES ─────────────────────────────────────────────────────────────
+  /confluences:
+    post:
+      operationId: createConfluence
+      tags: [confluences]
+      summary: Create a confluence item
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ConfluenceInput"
+      responses:
+        "201":
+          description: Created
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Confluence"
+
+  /confluences/{id}:
+    patch:
+      operationId: updateConfluence
+      tags: [confluences]
+      summary: Update confluence
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ConfluenceUpdate"
+      responses:
+        "200":
+          description: Updated
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Confluence"
+        "404":
+          description: Not found
+    delete:
+      operationId: deleteConfluence
+      tags: [confluences]
+      summary: Delete confluence
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "204":
+          description: Deleted
+        "404":
+          description: Not found
+
+  # ─── TAGS ───────────────────────────────────────────────────────────────────
+  /tags:
+    get:
+      operationId: listTags
+      tags: [tags]
+      summary: List all tags
+      responses:
+        "200":
+          description: List of tags
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Tag"
+    post:
+      operationId: createTag
+      tags: [tags]
+      summary: Create a tag
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/TagInput"
+      responses:
+        "201":
+          description: Created
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Tag"
+
+  /tags/{id}:
+    delete:
+      operationId: deleteTag
+      tags: [tags]
+      summary: Delete a tag
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "204":
+          description: Deleted
+        "404":
+          description: Not found
+
+  # ─── TRADES ─────────────────────────────────────────────────────────────────
+  /trades:
+    get:
+      operationId: listTrades
+      tags: [trades]
+      summary: List trades (journal) with filters
+      parameters:
+        - name: accountId
+          in: query
+          schema:
+            type: integer
+        - name: instrumentId
+          in: query
+          schema:
+            type: integer
+        - name: assetClass
+          in: query
+          schema:
+            type: string
+        - name: direction
+          in: query
+          schema:
+            type: string
+            enum: [long, short]
+        - name: status
+          in: query
+          schema:
+            type: string
+            enum: [open, partially_closed, closed]
+        - name: strategyId
+          in: query
+          schema:
+            type: integer
+        - name: setupId
+          in: query
+          schema:
+            type: integer
+        - name: outcome
+          in: query
+          schema:
+            type: string
+            enum: [win, loss, breakeven]
+        - name: dateFrom
+          in: query
+          schema:
+            type: string
+            format: date
+        - name: dateTo
+          in: query
+          schema:
+            type: string
+            format: date
+        - name: sortBy
+          in: query
+          schema:
+            type: string
+            default: openedAt
+        - name: sortDir
+          in: query
+          schema:
+            type: string
+            enum: [asc, desc]
+            default: desc
+        - name: limit
+          in: query
+          schema:
+            type: integer
+            default: 100
+        - name: offset
+          in: query
+          schema:
+            type: integer
+            default: 0
+      responses:
+        "200":
+          description: List of trade summaries
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/TradeListResponse"
+    post:
+      operationId: createTrade
+      tags: [trades]
+      summary: Create a new trade
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/TradeInput"
+      responses:
+        "201":
+          description: Created trade with calculated values
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/TradeDetail"
+
+  /trades/{id}:
+    get:
+      operationId: getTrade
+      tags: [trades]
+      summary: Get full trade detail with executions, confluences, tags, and review
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Trade detail
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/TradeDetail"
+        "404":
+          description: Not found
+    patch:
+      operationId: updateTrade
+      tags: [trades]
+      summary: Update trade metadata
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/TradeUpdate"
+      responses:
+        "200":
+          description: Updated trade
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/TradeDetail"
+        "404":
+          description: Not found
+    delete:
+      operationId: deleteTrade
+      tags: [trades]
+      summary: Delete trade and all its executions
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "204":
+          description: Deleted
+        "404":
+          description: Not found
+
+  /trades/{tradeId}/confluences:
+    put:
+      operationId: setTradeConfluences
+      tags: [trades]
+      summary: Replace all confluences on a trade
+      parameters:
+        - name: tradeId
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/TradeConfluencesInput"
+      responses:
+        "200":
+          description: Updated trade
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/TradeDetail"
+        "404":
+          description: Not found
+
+  /trades/{tradeId}/tags:
+    put:
+      operationId: setTradeTags
+      tags: [trades]
+      summary: Replace all tags on a trade
+      parameters:
+        - name: tradeId
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/TradeTagsInput"
+      responses:
+        "200":
+          description: Updated trade
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/TradeDetail"
+        "404":
+          description: Not found
+
+  # ─── EXECUTIONS ─────────────────────────────────────────────────────────────
+  /trades/{tradeId}/executions:
+    post:
+      operationId: createExecution
+      tags: [executions]
+      summary: Add an execution to a trade
+      parameters:
+        - name: tradeId
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ExecutionInput"
+      responses:
+        "201":
+          description: Created — returns full trade with recalculated values
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/TradeDetail"
+        "400":
+          description: Invalid execution (e.g. exits exceed open position)
+        "404":
+          description: Trade not found
+
+  /executions/{id}:
+    patch:
+      operationId: updateExecution
+      tags: [executions]
+      summary: Update an execution
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ExecutionUpdate"
+      responses:
+        "200":
+          description: Updated — returns full trade with recalculated values
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/TradeDetail"
+        "404":
+          description: Not found
+    delete:
+      operationId: deleteExecution
+      tags: [executions]
+      summary: Delete an execution
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Deleted — returns full trade with recalculated values
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/TradeDetail"
+        "404":
+          description: Not found
+
+  # ─── TRADE REVIEW ────────────────────────────────────────────────────────────
+  /trades/{tradeId}/review:
+    get:
+      operationId: getTradeReview
+      tags: [reviews]
+      summary: Get the review for a trade
+      parameters:
+        - name: tradeId
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Review (may be empty if not yet written)
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/TradeReview"
+        "404":
+          description: Trade not found
+    put:
+      operationId: upsertTradeReview
+      tags: [reviews]
+      summary: Create or update the review for a trade
+      parameters:
+        - name: tradeId
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/TradeReviewInput"
+      responses:
+        "200":
+          description: Review upserted
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/TradeReview"
+        "404":
+          description: Trade not found
+
+  # ─── DASHBOARD ───────────────────────────────────────────────────────────────
+  /dashboard/stats:
+    get:
+      operationId: getDashboardStats
+      tags: [dashboard]
+      summary: Headline performance statistics
+      parameters:
+        - name: accountId
+          in: query
+          schema:
+            type: integer
+        - name: dateFrom
+          in: query
+          schema:
+            type: string
+            format: date
+        - name: dateTo
+          in: query
+          schema:
+            type: string
+            format: date
+      responses:
+        "200":
+          description: Stats grouped by currency
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/DashboardStats"
+
+  /dashboard/equity-curve:
+    get:
+      operationId: getDashboardEquityCurve
+      tags: [dashboard]
+      summary: Cumulative P&L over time
+      parameters:
+        - name: accountId
+          in: query
+          schema:
+            type: integer
+        - name: dateFrom
+          in: query
+          schema:
+            type: string
+            format: date
+        - name: dateTo
+          in: query
+          schema:
+            type: string
+            format: date
+      responses:
+        "200":
+          description: Equity curve data points grouped by currency
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/EquityCurveGroup"
+
+  /dashboard/pnl-by-day:
+    get:
+      operationId: getDashboardPnlByDay
+      tags: [dashboard]
+      summary: P&L grouped by day of week
+      parameters:
+        - name: accountId
+          in: query
+          schema:
+            type: integer
+        - name: dateFrom
+          in: query
+          schema:
+            type: string
+            format: date
+        - name: dateTo
+          in: query
+          schema:
+            type: string
+            format: date
+      responses:
+        "200":
+          description: P&L by day of week grouped by currency
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/PnlByDayGroup"
+
+  /dashboard/pnl-by-strategy:
+    get:
+      operationId: getDashboardPnlByStrategy
+      tags: [dashboard]
+      summary: Performance metrics grouped by strategy
+      parameters:
+        - name: accountId
+          in: query
+          schema:
+            type: integer
+        - name: dateFrom
+          in: query
+          schema:
+            type: string
+            format: date
+        - name: dateTo
+          in: query
+          schema:
+            type: string
+            format: date
+      responses:
+        "200":
+          description: Strategy performance
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/StrategyPerformance"
+
+  /dashboard/monthly-pnl:
+    get:
+      operationId: getDashboardMonthlyPnl
+      tags: [dashboard]
+      summary: P&L grouped by month
+      parameters:
+        - name: accountId
+          in: query
+          schema:
+            type: integer
+        - name: year
+          in: query
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Monthly P&L grouped by currency
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/MonthlyPnlGroup"
+
+  /dashboard/recent-trades:
+    get:
+      operationId: getDashboardRecentTrades
+      tags: [dashboard]
+      summary: Most recent closed trades
+      parameters:
+        - name: accountId
+          in: query
+          schema:
+            type: integer
+        - name: limit
+          in: query
+          schema:
+            type: integer
+            default: 10
+      responses:
+        "200":
+          description: Recent trades
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/TradeSummary"
+
+  /dashboard/win-loss:
+    get:
+      operationId: getDashboardWinLoss
+      tags: [dashboard]
+      summary: Win/loss/breakeven breakdown
+      parameters:
+        - name: accountId
+          in: query
+          schema:
+            type: integer
+        - name: dateFrom
+          in: query
+          schema:
+            type: string
+            format: date
+        - name: dateTo
+          in: query
+          schema:
+            type: string
+            format: date
+      responses:
+        "200":
+          description: Win/loss breakdown grouped by currency
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/WinLossGroup"
+
+  # ─── SETTINGS ────────────────────────────────────────────────────────────────
+  /settings:
+    get:
+      operationId: getSettings
+      tags: [settings]
+      summary: Get application settings
+      responses:
+        "200":
+          description: Settings
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Settings"
+    patch:
+      operationId: updateSettings
+      tags: [settings]
+      summary: Update application settings
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/SettingsUpdate"
+      responses:
+        "200":
+          description: Updated settings
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Settings"
+
 components:
   schemas:
     HealthStatus:
@@ -34,3 +1187,557 @@ components:
       required:
         - status
 
+    # ── ACCOUNT ──────────────────────────────────────────────────────────────
+    Account:
+      type: object
+      required: [id, name, baseCurrency, isActive, createdAt, updatedAt]
+      properties:
+        id: { type: integer }
+        name: { type: string }
+        broker: { type: ["string", "null"] }
+        accountType: { type: ["string", "null"] }
+        baseCurrency: { type: string }
+        startingBalance: { type: ["number", "null"] }
+        currentBalance: { type: ["number", "null"] }
+        defaultRiskPercentage: { type: ["number", "null"] }
+        isActive: { type: boolean }
+        createdAt: { type: string, format: date-time }
+        updatedAt: { type: string, format: date-time }
+
+    AccountInput:
+      type: object
+      required: [name, baseCurrency]
+      properties:
+        name: { type: string, minLength: 1 }
+        broker: { type: string }
+        accountType: { type: string }
+        baseCurrency: { type: string, minLength: 1 }
+        startingBalance: { type: number }
+        currentBalance: { type: number }
+        defaultRiskPercentage: { type: number }
+        isActive: { type: boolean, default: true }
+
+    AccountUpdate:
+      type: object
+      properties:
+        name: { type: string, minLength: 1 }
+        broker: { type: string }
+        accountType: { type: string }
+        baseCurrency: { type: string }
+        startingBalance: { type: ["number", "null"] }
+        currentBalance: { type: ["number", "null"] }
+        defaultRiskPercentage: { type: ["number", "null"] }
+        isActive: { type: boolean }
+
+    # ── INSTRUMENT ──────────────────────────────────────────────────────────
+    Instrument:
+      type: object
+      required: [id, symbol, name, assetClass, settlementCurrency, quantityUnit, isActive, createdAt, updatedAt]
+      properties:
+        id: { type: integer }
+        symbol: { type: string }
+        name: { type: string }
+        assetClass: { type: string }
+        settlementCurrency: { type: string }
+        quantityUnit: { type: string }
+        contractMultiplier: { type: ["number", "null"] }
+        isActive: { type: boolean }
+        createdAt: { type: string, format: date-time }
+        updatedAt: { type: string, format: date-time }
+
+    InstrumentInput:
+      type: object
+      required: [symbol, name, assetClass, settlementCurrency, quantityUnit]
+      properties:
+        symbol: { type: string, minLength: 1 }
+        name: { type: string, minLength: 1 }
+        assetClass: { type: string, minLength: 1 }
+        settlementCurrency: { type: string, minLength: 1 }
+        quantityUnit: { type: string, minLength: 1 }
+        contractMultiplier: { type: number }
+        isActive: { type: boolean, default: true }
+
+    InstrumentUpdate:
+      type: object
+      properties:
+        symbol: { type: string }
+        name: { type: string }
+        assetClass: { type: string }
+        settlementCurrency: { type: string }
+        quantityUnit: { type: string }
+        contractMultiplier: { type: ["number", "null"] }
+        isActive: { type: boolean }
+
+    # ── STRATEGY ─────────────────────────────────────────────────────────────
+    Strategy:
+      type: object
+      required: [id, name, isActive, createdAt, updatedAt]
+      properties:
+        id: { type: integer }
+        name: { type: string }
+        description: { type: ["string", "null"] }
+        isActive: { type: boolean }
+        setups:
+          type: array
+          items:
+            $ref: "#/components/schemas/Setup"
+        createdAt: { type: string, format: date-time }
+        updatedAt: { type: string, format: date-time }
+
+    StrategyInput:
+      type: object
+      required: [name]
+      properties:
+        name: { type: string, minLength: 1 }
+        description: { type: string }
+        isActive: { type: boolean, default: true }
+
+    StrategyUpdate:
+      type: object
+      properties:
+        name: { type: string }
+        description: { type: ["string", "null"] }
+        isActive: { type: boolean }
+
+    # ── SETUP ────────────────────────────────────────────────────────────────
+    Setup:
+      type: object
+      required: [id, name, isActive, createdAt, updatedAt]
+      properties:
+        id: { type: integer }
+        strategyId: { type: ["integer", "null"] }
+        strategyName: { type: ["string", "null"] }
+        name: { type: string }
+        description: { type: ["string", "null"] }
+        isActive: { type: boolean }
+        createdAt: { type: string, format: date-time }
+        updatedAt: { type: string, format: date-time }
+
+    SetupInput:
+      type: object
+      required: [name]
+      properties:
+        strategyId: { type: integer }
+        name: { type: string, minLength: 1 }
+        description: { type: string }
+        isActive: { type: boolean, default: true }
+
+    SetupUpdate:
+      type: object
+      properties:
+        strategyId: { type: ["integer", "null"] }
+        name: { type: string }
+        description: { type: ["string", "null"] }
+        isActive: { type: boolean }
+
+    # ── CONFLUENCE CATEGORY ──────────────────────────────────────────────────
+    ConfluenceCategory:
+      type: object
+      required: [id, name, createdAt, updatedAt]
+      properties:
+        id: { type: integer }
+        name: { type: string }
+        confluences:
+          type: array
+          items:
+            $ref: "#/components/schemas/Confluence"
+        createdAt: { type: string, format: date-time }
+        updatedAt: { type: string, format: date-time }
+
+    ConfluenceCategoryInput:
+      type: object
+      required: [name]
+      properties:
+        name: { type: string, minLength: 1 }
+
+    ConfluenceCategoryUpdate:
+      type: object
+      properties:
+        name: { type: string }
+
+    # ── CONFLUENCE ───────────────────────────────────────────────────────────
+    Confluence:
+      type: object
+      required: [id, categoryId, categoryName, name, isActive, createdAt, updatedAt]
+      properties:
+        id: { type: integer }
+        categoryId: { type: integer }
+        categoryName: { type: string }
+        name: { type: string }
+        isActive: { type: boolean }
+        createdAt: { type: string, format: date-time }
+        updatedAt: { type: string, format: date-time }
+
+    ConfluenceInput:
+      type: object
+      required: [categoryId, name]
+      properties:
+        categoryId: { type: integer }
+        name: { type: string, minLength: 1 }
+        isActive: { type: boolean, default: true }
+
+    ConfluenceUpdate:
+      type: object
+      properties:
+        categoryId: { type: integer }
+        name: { type: string }
+        isActive: { type: boolean }
+
+    # ── TAG ──────────────────────────────────────────────────────────────────
+    Tag:
+      type: object
+      required: [id, name, createdAt]
+      properties:
+        id: { type: integer }
+        name: { type: string }
+        createdAt: { type: string, format: date-time }
+
+    TagInput:
+      type: object
+      required: [name]
+      properties:
+        name: { type: string, minLength: 1 }
+
+    # ── EXECUTION ────────────────────────────────────────────────────────────
+    Execution:
+      type: object
+      required: [id, tradeId, side, executedAt, price, quantity, quantityUnit, createdAt, updatedAt]
+      properties:
+        id: { type: integer }
+        tradeId: { type: integer }
+        side: { type: string, enum: [buy, sell] }
+        executedAt: { type: string, format: date-time }
+        price: { type: number }
+        quantity: { type: number }
+        quantityUnit: { type: string }
+        commission: { type: ["number", "null"] }
+        fees: { type: ["number", "null"] }
+        notes: { type: ["string", "null"] }
+        createdAt: { type: string, format: date-time }
+        updatedAt: { type: string, format: date-time }
+
+    ExecutionInput:
+      type: object
+      required: [side, executedAt, price, quantity, quantityUnit]
+      properties:
+        side: { type: string, enum: [buy, sell] }
+        executedAt: { type: string, format: date-time }
+        price: { type: number }
+        quantity: { type: number }
+        quantityUnit: { type: string }
+        commission: { type: number }
+        fees: { type: number }
+        notes: { type: string }
+
+    ExecutionUpdate:
+      type: object
+      properties:
+        side: { type: string, enum: [buy, sell] }
+        executedAt: { type: string, format: date-time }
+        price: { type: number }
+        quantity: { type: number }
+        quantityUnit: { type: string }
+        commission: { type: ["number", "null"] }
+        fees: { type: ["number", "null"] }
+        notes: { type: ["string", "null"] }
+
+    # ── TRADE REVIEW ─────────────────────────────────────────────────────────
+    TradeReview:
+      type: object
+      required: [id, tradeId, createdAt, updatedAt]
+      properties:
+        id: { type: integer }
+        tradeId: { type: integer }
+        reviewNotes: { type: ["string", "null"] }
+        whatWentWell: { type: ["string", "null"] }
+        whatWentWrong: { type: ["string", "null"] }
+        ruleAdherence: { type: ["integer", "null"] }
+        tradeQuality: { type: ["integer", "null"] }
+        lessonsLearned: { type: ["string", "null"] }
+        createdAt: { type: string, format: date-time }
+        updatedAt: { type: string, format: date-time }
+
+    TradeReviewInput:
+      type: object
+      properties:
+        reviewNotes: { type: ["string", "null"] }
+        whatWentWell: { type: ["string", "null"] }
+        whatWentWrong: { type: ["string", "null"] }
+        ruleAdherence: { type: ["integer", "null"] }
+        tradeQuality: { type: ["integer", "null"] }
+        lessonsLearned: { type: ["string", "null"] }
+
+    # ── TRADE CALCULATED VALUES ───────────────────────────────────────────────
+    TradeCalculated:
+      type: object
+      description: Values derived from executions — never stored, always computed
+      required: [avgEntry, openPositionSize, realizedGrossPnl, realizedNetPnl, totalCommissions, totalFees, tradeLevelCosts, openedAt]
+      properties:
+        avgEntry: { type: ["number", "null"] }
+        avgExit: { type: ["number", "null"] }
+        openPositionSize: { type: number }
+        realizedQuantity: { type: number }
+        realizedGrossPnl: { type: number }
+        realizedNetPnl: { type: number }
+        totalCommissions: { type: number }
+        totalFees: { type: number }
+        tradeLevelCosts: { type: number }
+        plannedR: { type: ["number", "null"] }
+        actualR: { type: ["number", "null"] }
+        openedAt: { type: ["string", "null"], format: date-time }
+        closedAt: { type: ["string", "null"], format: date-time }
+        durationMinutes: { type: ["integer", "null"] }
+        outcome: { type: ["string", "null"], enum: [win, loss, breakeven, null] }
+
+    # ── TRADE SUMMARY (for journal list) ─────────────────────────────────────
+    TradeSummary:
+      type: object
+      required: [id, accountId, accountName, instrumentId, instrumentSymbol, assetClass, settlementCurrency, direction, status, tradeTimezone, createdAt, updatedAt]
+      properties:
+        id: { type: integer }
+        accountId: { type: integer }
+        accountName: { type: string }
+        instrumentId: { type: integer }
+        instrumentSymbol: { type: string }
+        instrumentName: { type: string }
+        assetClass: { type: string }
+        settlementCurrency: { type: string }
+        direction: { type: string, enum: [long, short] }
+        status: { type: string, enum: [open, partially_closed, closed] }
+        strategyId: { type: ["integer", "null"] }
+        strategyName: { type: ["string", "null"] }
+        setupId: { type: ["integer", "null"] }
+        setupName: { type: ["string", "null"] }
+        tradeTimezone: { type: string }
+        notes: { type: ["string", "null"] }
+        tradeLevelCostAdjustment: { type: ["number", "null"] }
+        plannedEntry: { type: ["number", "null"] }
+        initialStopLoss: { type: ["number", "null"] }
+        profitTarget: { type: ["number", "null"] }
+        plannedPositionSize: { type: ["number", "null"] }
+        plannedRisk: { type: ["number", "null"] }
+        plannedRiskPercentage: { type: ["number", "null"] }
+        calculated:
+          $ref: "#/components/schemas/TradeCalculated"
+        createdAt: { type: string, format: date-time }
+        updatedAt: { type: string, format: date-time }
+
+    # ── TRADE DETAIL (full, with executions/confluences/tags/review) ──────────
+    TradeDetail:
+      allOf:
+        - $ref: "#/components/schemas/TradeSummary"
+        - type: object
+          required: [executions, confluences, tags]
+          properties:
+            executions:
+              type: array
+              items:
+                $ref: "#/components/schemas/Execution"
+            confluences:
+              type: array
+              items:
+                $ref: "#/components/schemas/Confluence"
+            tags:
+              type: array
+              items:
+                $ref: "#/components/schemas/Tag"
+            review:
+              $ref: "#/components/schemas/TradeReview"
+
+    TradeListResponse:
+      type: object
+      required: [trades, total, limit, offset]
+      properties:
+        trades:
+          type: array
+          items:
+            $ref: "#/components/schemas/TradeSummary"
+        total: { type: integer }
+        limit: { type: integer }
+        offset: { type: integer }
+
+    TradeInput:
+      type: object
+      required: [accountId, instrumentId, direction]
+      properties:
+        accountId: { type: integer }
+        instrumentId: { type: integer }
+        direction: { type: string, enum: [long, short] }
+        strategyId: { type: integer }
+        setupId: { type: integer }
+        confluenceIds:
+          type: array
+          items: { type: integer }
+        tagIds:
+          type: array
+          items: { type: integer }
+        plannedEntry: { type: number }
+        initialStopLoss: { type: number }
+        profitTarget: { type: number }
+        plannedPositionSize: { type: number }
+        plannedRisk: { type: number }
+        plannedRiskPercentage: { type: number }
+        tradeLevelCostAdjustment: { type: number }
+        notes: { type: string }
+        tradeTimezone: { type: string }
+        executions:
+          type: array
+          items:
+            $ref: "#/components/schemas/ExecutionInput"
+
+    TradeUpdate:
+      type: object
+      properties:
+        strategyId: { type: ["integer", "null"] }
+        setupId: { type: ["integer", "null"] }
+        plannedEntry: { type: ["number", "null"] }
+        initialStopLoss: { type: ["number", "null"] }
+        profitTarget: { type: ["number", "null"] }
+        plannedPositionSize: { type: ["number", "null"] }
+        plannedRisk: { type: ["number", "null"] }
+        plannedRiskPercentage: { type: ["number", "null"] }
+        tradeLevelCostAdjustment: { type: ["number", "null"] }
+        notes: { type: ["string", "null"] }
+        tradeTimezone: { type: string }
+
+    TradeConfluencesInput:
+      type: object
+      required: [confluenceIds]
+      properties:
+        confluenceIds:
+          type: array
+          items: { type: integer }
+
+    TradeTagsInput:
+      type: object
+      required: [tagIds]
+      properties:
+        tagIds:
+          type: array
+          items: { type: integer }
+
+    # ── DASHBOARD TYPES ───────────────────────────────────────────────────────
+    DashboardStats:
+      type: object
+      required: [currency, tradeCount, winCount, lossCount, breakevenCount, winRate, netPnl, grossPnl, avgWinner, avgLoser, avgR, profitFactor, expectancy]
+      properties:
+        currency: { type: string }
+        tradeCount: { type: integer }
+        winCount: { type: integer }
+        lossCount: { type: integer }
+        breakevenCount: { type: integer }
+        winRate: { type: number }
+        netPnl: { type: number }
+        grossPnl: { type: number }
+        avgWinner: { type: number }
+        avgLoser: { type: number }
+        avgR: { type: ["number", "null"] }
+        profitFactor: { type: ["number", "null"] }
+        expectancy: { type: number }
+
+    EquityCurvePoint:
+      type: object
+      required: [date, cumulativePnl, tradeId]
+      properties:
+        date: { type: string, format: date-time }
+        cumulativePnl: { type: number }
+        tradePnl: { type: number }
+        tradeId: { type: integer }
+
+    EquityCurveGroup:
+      type: object
+      required: [currency, points]
+      properties:
+        currency: { type: string }
+        points:
+          type: array
+          items:
+            $ref: "#/components/schemas/EquityCurvePoint"
+
+    PnlByDayEntry:
+      type: object
+      required: [dayOfWeek, dayName, netPnl, tradeCount, winRate]
+      properties:
+        dayOfWeek: { type: integer }
+        dayName: { type: string }
+        netPnl: { type: number }
+        tradeCount: { type: integer }
+        winRate: { type: number }
+
+    PnlByDayGroup:
+      type: object
+      required: [currency, days]
+      properties:
+        currency: { type: string }
+        days:
+          type: array
+          items:
+            $ref: "#/components/schemas/PnlByDayEntry"
+
+    StrategyPerformance:
+      type: object
+      required: [strategyId, strategyName, currency, tradeCount, winRate, netPnl, avgR]
+      properties:
+        strategyId: { type: ["integer", "null"] }
+        strategyName: { type: string }
+        currency: { type: string }
+        tradeCount: { type: integer }
+        winRate: { type: number }
+        netPnl: { type: number }
+        avgR: { type: ["number", "null"] }
+
+    MonthlyPnlEntry:
+      type: object
+      required: [month, year, netPnl, tradeCount]
+      properties:
+        month: { type: integer }
+        year: { type: integer }
+        netPnl: { type: number }
+        tradeCount: { type: integer }
+
+    MonthlyPnlGroup:
+      type: object
+      required: [currency, months]
+      properties:
+        currency: { type: string }
+        months:
+          type: array
+          items:
+            $ref: "#/components/schemas/MonthlyPnlEntry"
+
+    WinLossEntry:
+      type: object
+      required: [outcome, count, totalPnl]
+      properties:
+        outcome: { type: string, enum: [win, loss, breakeven] }
+        count: { type: integer }
+        totalPnl: { type: number }
+
+    WinLossGroup:
+      type: object
+      required: [currency, breakdown]
+      properties:
+        currency: { type: string }
+        breakdown:
+          type: array
+          items:
+            $ref: "#/components/schemas/WinLossEntry"
+
+    # ── SETTINGS ─────────────────────────────────────────────────────────────
+    Settings:
+      type: object
+      required: [id, timezone, dashboardDefaultDateRange, createdAt, updatedAt]
+      properties:
+        id: { type: integer }
+        timezone: { type: string }
+        defaultAccountId: { type: ["integer", "null"] }
+        dashboardDefaultDateRange: { type: string, enum: [this_month, last_30_days, this_year, all_time] }
+        createdAt: { type: string, format: date-time }
+        updatedAt: { type: string, format: date-time }
+
+    SettingsUpdate:
+      type: object
+      properties:
+        timezone: { type: string }
+        defaultAccountId: { type: ["integer", "null"] }
+        dashboardDefaultDateRange: { type: string, enum: [this_month, last_30_days, this_year, all_time] }

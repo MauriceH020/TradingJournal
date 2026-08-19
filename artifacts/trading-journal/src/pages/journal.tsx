@@ -1,0 +1,263 @@
+import { useState } from 'react';
+import { 
+  useListTrades,
+  useListAccounts,
+  useListInstruments,
+  useListStrategies
+} from '@workspace/api-client-react';
+import { Card, CardContent } from '@/components/ui/card';
+import { Input } from '@/components/ui/input';
+import { Button } from '@/components/ui/button';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { format } from 'date-fns';
+import { Link, useLocation } from 'wouter';
+import { Badge } from '@/components/ui/badge';
+import { Skeleton } from '@/components/ui/skeleton';
+import { Filter, Search, ChevronRight, ChevronLeft, ChevronDown, ChevronUp } from 'lucide-react';
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
+
+function formatCurrency(val: number | null | undefined, currency = 'USD') {
+  if (val == null) return '-';
+  try {
+    return new Intl.NumberFormat('en-US', { style: 'currency', currency }).format(val);
+  } catch (e) {
+    return `${val < 0 ? '-' : ''}${currency} ${Math.abs(val).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+  }
+}
+
+function formatNumber(val: number | null | undefined, decimals = 2) {
+  if (val == null) return '-';
+  return new Intl.NumberFormat('en-US', { minimumFractionDigits: decimals, maximumFractionDigits: decimals }).format(val);
+}
+
+export default function Journal() {
+  const [, setLocation] = useLocation();
+  const [filtersOpen, setFiltersOpen] = useState(false);
+  const [filters, setFilters] = useState({
+    accountId: 'all',
+    instrumentId: 'all',
+    direction: 'all',
+    status: 'all',
+    outcome: 'all',
+    strategyId: 'all'
+  });
+  const [page, setPage] = useState(1);
+  const limit = 20;
+
+  const { data: accounts } = useListAccounts();
+  const { data: instruments } = useListInstruments();
+  const { data: strategies } = useListStrategies();
+
+  const queryParams = {
+    limit,
+    offset: (page - 1) * limit,
+    ...(filters.accountId !== 'all' && { accountId: Number(filters.accountId) }),
+    ...(filters.instrumentId !== 'all' && { instrumentId: Number(filters.instrumentId) }),
+    ...(filters.direction !== 'all' && { direction: filters.direction as any }),
+    ...(filters.status !== 'all' && { status: filters.status as any }),
+    ...(filters.outcome !== 'all' && { outcome: filters.outcome as any }),
+    ...(filters.strategyId !== 'all' && { strategyId: Number(filters.strategyId) }),
+  };
+
+  const { data: tradesPage, isLoading } = useListTrades(queryParams);
+  const trades = (tradesPage as any)?.trades || [];
+  
+  const handleFilterChange = (key: string, value: string) => {
+    setFilters(prev => ({ ...prev, [key]: value }));
+    setPage(1);
+  };
+
+  return (
+    <div className="flex-1 space-y-4 p-4 md:p-8 pt-6">
+      <div className="flex flex-col sm:flex-row items-center justify-between space-y-2 sm:space-y-0">
+        <div>
+          <h2 className="text-3xl font-bold tracking-tight">Journal</h2>
+          <p className="text-muted-foreground">Review and analyze your trades.</p>
+        </div>
+        <Button onClick={() => setLocation('/trades/new')} className="font-bold">
+          Add Trade
+        </Button>
+      </div>
+
+      <Collapsible open={filtersOpen} onOpenChange={setFiltersOpen} className="w-full space-y-2">
+        <div className="flex items-center justify-between border border-border p-3 rounded-md bg-card">
+          <div className="flex items-center gap-2 text-sm font-medium">
+            <Filter className="h-4 w-4" />
+            Filters {Object.values(filters).filter(v => v !== 'all').length > 0 && `(${Object.values(filters).filter(v => v !== 'all').length} active)`}
+          </div>
+          <CollapsibleTrigger asChild>
+            <Button variant="ghost" size="sm" className="w-9 p-0">
+              {filtersOpen ? <ChevronUp className="h-4 w-4" /> : <ChevronDown className="h-4 w-4" />}
+            </Button>
+          </CollapsibleTrigger>
+        </div>
+        <CollapsibleContent className="space-y-4">
+          <Card className="bg-card">
+            <CardContent className="p-4 grid gap-4 md:grid-cols-3 lg:grid-cols-6">
+              <div className="space-y-1">
+                <label className="text-xs font-medium text-muted-foreground">Account</label>
+                <Select value={filters.accountId} onValueChange={(v) => handleFilterChange('accountId', v)}>
+                  <SelectTrigger><SelectValue placeholder="All" /></SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">All</SelectItem>
+                    {accounts?.map(acc => <SelectItem key={acc.id} value={acc.id.toString()}>{acc.name}</SelectItem>)}
+                  </SelectContent>
+                </Select>
+              </div>
+              <div className="space-y-1">
+                <label className="text-xs font-medium text-muted-foreground">Instrument</label>
+                <Select value={filters.instrumentId} onValueChange={(v) => handleFilterChange('instrumentId', v)}>
+                  <SelectTrigger><SelectValue placeholder="All" /></SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">All</SelectItem>
+                    {instruments?.map(inst => <SelectItem key={inst.id} value={inst.id.toString()}>{inst.symbol}</SelectItem>)}
+                  </SelectContent>
+                </Select>
+              </div>
+              <div className="space-y-1">
+                <label className="text-xs font-medium text-muted-foreground">Direction</label>
+                <Select value={filters.direction} onValueChange={(v) => handleFilterChange('direction', v)}>
+                  <SelectTrigger><SelectValue placeholder="All" /></SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">All</SelectItem>
+                    <SelectItem value="long">Long</SelectItem>
+                    <SelectItem value="short">Short</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+              <div className="space-y-1">
+                <label className="text-xs font-medium text-muted-foreground">Status</label>
+                <Select value={filters.status} onValueChange={(v) => handleFilterChange('status', v)}>
+                  <SelectTrigger><SelectValue placeholder="All" /></SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">All</SelectItem>
+                    <SelectItem value="open">Open</SelectItem>
+                    <SelectItem value="partially_closed">Partially Closed</SelectItem>
+                    <SelectItem value="closed">Closed</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+              <div className="space-y-1">
+                <label className="text-xs font-medium text-muted-foreground">Outcome</label>
+                <Select value={filters.outcome} onValueChange={(v) => handleFilterChange('outcome', v)}>
+                  <SelectTrigger><SelectValue placeholder="All" /></SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">All</SelectItem>
+                    <SelectItem value="win">Win</SelectItem>
+                    <SelectItem value="loss">Loss</SelectItem>
+                    <SelectItem value="breakeven">Breakeven</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+              <div className="space-y-1">
+                <label className="text-xs font-medium text-muted-foreground">Strategy</label>
+                <Select value={filters.strategyId} onValueChange={(v) => handleFilterChange('strategyId', v)}>
+                  <SelectTrigger><SelectValue placeholder="All" /></SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">All</SelectItem>
+                    {strategies?.map(s => <SelectItem key={s.id} value={s.id.toString()}>{s.name}</SelectItem>)}
+                  </SelectContent>
+                </Select>
+              </div>
+            </CardContent>
+          </Card>
+        </CollapsibleContent>
+      </Collapsible>
+
+      <Card className="bg-card shadow-sm border-border">
+        <div className="overflow-x-auto">
+          <table className="w-full text-sm text-left">
+            <thead className="text-xs text-muted-foreground uppercase bg-accent/30 border-b border-border">
+              <tr>
+                <th className="px-4 py-3">Date Opened</th>
+                <th className="px-4 py-3">Symbol</th>
+                <th className="px-4 py-3">Dir</th>
+                <th className="px-4 py-3 text-right">Size</th>
+                <th className="px-4 py-3 text-right">Avg Entry</th>
+                <th className="px-4 py-3 text-right">Avg Exit</th>
+                <th className="px-4 py-3 text-right">Net P&L</th>
+                <th className="px-4 py-3 text-right">R</th>
+                <th className="px-4 py-3">Status</th>
+                <th className="px-4 py-3">Actions</th>
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-border">
+              {isLoading ? (
+                [...Array(5)].map((_, i) => (
+                  <tr key={i}>
+                    <td colSpan={10} className="px-4 py-4"><Skeleton className="h-6 w-full" /></td>
+                  </tr>
+                ))
+              ) : trades.length === 0 ? (
+                <tr>
+                  <td colSpan={10} className="px-4 py-8 text-center text-muted-foreground">
+                    No trades found matching filters.
+                  </td>
+                </tr>
+              ) : (
+                trades.map((trade: any) => {
+                  const netPnl = trade.calculated?.netPnl;
+                  const isPos = netPnl > 0;
+                  const isNeg = netPnl < 0;
+                  const currency = trade.settlementCurrency || 'USD';
+                  
+                  return (
+                    <tr 
+                      key={trade.id} 
+                      className="hover:bg-accent/30 transition-colors cursor-pointer"
+                      onClick={() => setLocation(`/trades/${trade.id}`)}
+                    >
+                      <td className="px-4 py-3 whitespace-nowrap">{trade.calculated?.openedAt ? format(new Date(trade.calculated.openedAt), 'MMM dd, HH:mm') : '-'}</td>
+                      <td className="px-4 py-3 font-medium whitespace-nowrap">{trade.instrumentSymbol}</td>
+                      <td className="px-4 py-3">
+                        <Badge variant="outline" className={trade.direction === 'long' ? 'text-primary border-primary/30' : 'text-destructive border-destructive/30'}>
+                          {trade.direction.toUpperCase()}
+                        </Badge>
+                      </td>
+                      <td className="px-4 py-3 text-right font-mono">{trade.calculated?.openPositionSize != null ? formatNumber(trade.calculated.openPositionSize + (trade.calculated.realizedQuantity ?? 0), 2) : (trade.plannedPositionSize ?? '-')}</td>
+                      <td className="px-4 py-3 text-right font-mono">{formatNumber(trade.calculated?.avgEntry, 4)}</td>
+                      <td className="px-4 py-3 text-right font-mono">{formatNumber(trade.calculated?.avgExit, 4)}</td>
+                      <td className={`px-4 py-3 text-right font-mono font-bold ${isPos ? 'text-primary' : isNeg ? 'text-destructive' : ''}`}>
+                        {formatCurrency(netPnl, currency)}
+                      </td>
+                      <td className={`px-4 py-3 text-right font-mono ${(trade.calculated?.actualR ?? 0) > 0 ? 'text-primary' : (trade.calculated?.actualR ?? 0) < 0 ? 'text-destructive' : ''}`}>
+                        {trade.calculated?.actualR != null ? `${formatNumber(trade.calculated.actualR)}R` : '-'}
+                      </td>
+                      <td className="px-4 py-3">
+                        <Badge variant="secondary" className={
+                          trade.status === 'open' ? 'bg-blue-500/20 text-blue-400' :
+                          trade.status === 'partially_closed' ? 'bg-orange-500/20 text-orange-400' :
+                          'bg-muted text-muted-foreground'
+                        }>
+                          {trade.status.replace('_', ' ').toUpperCase()}
+                        </Badge>
+                      </td>
+                      <td className="px-4 py-3">
+                        <Button variant="ghost" size="sm" onClick={(e) => { e.stopPropagation(); setLocation(`/trades/${trade.id}`); }}>
+                          <ChevronRight className="h-4 w-4" />
+                        </Button>
+                      </td>
+                    </tr>
+                  )
+                })
+              )}
+            </tbody>
+          </table>
+        </div>
+        <div className="flex items-center justify-between px-4 py-3 border-t border-border">
+          <div className="text-sm text-muted-foreground">
+            Showing {trades.length} trades
+          </div>
+          <div className="flex gap-2">
+            <Button variant="outline" size="sm" disabled={page === 1} onClick={() => setPage(p => p - 1)}>
+              <ChevronLeft className="h-4 w-4 mr-1" /> Prev
+            </Button>
+            <Button variant="outline" size="sm" disabled={trades.length < limit} onClick={() => setPage(p => p + 1)}>
+              Next <ChevronRight className="h-4 w-4 ml-1" />
+            </Button>
+          </div>
+        </div>
+      </Card>
+    </div>
+  );
+}
