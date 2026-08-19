@@ -20,6 +20,16 @@ export interface TradeCalculated {
      * @nullable
      */
   positionValue: number | null;
+  /**
+     * Maximum loss at the initial stop loss for the executed entry position
+     * @nullable
+     */
+  riskAmount: number | null;
+  /**
+     * Risk amount as a percentage of the account balance
+     * @nullable
+     */
+  riskPercentage: number | null;
   openPositionSize: number;
   realizedQuantity?: number;
   realizedGrossPnl: number;

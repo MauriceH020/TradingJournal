@@ -16,12 +16,16 @@ export type TradeCalcInput = {
   initialStopLoss?: string | number | null;
   tradeLevelCostAdjustment?: string | number | null;
   contractMultiplier?: string | number | null;
+  accountCurrentBalance?: string | number | null;
+  accountStartingBalance?: string | number | null;
 };
 
 export type TradeCalcResult = {
   avgEntry: number | null;
   avgExit: number | null;
   positionValue: number | null;
+  riskAmount: number | null;
+  riskPercentage: number | null;
   openPositionSize: number;
   realizedQuantity: number;
   realizedGrossPnl: number;
@@ -29,7 +33,7 @@ export type TradeCalcResult = {
   totalCommissions: number;
   totalFees: number;
   tradeLevelCosts: number;
-  plannedR: null; // always null — requires external call
+  plannedR: number | null;
   actualR: number | null;
   openedAt: Date | null;
   closedAt: Date | null;
@@ -69,6 +73,24 @@ export function calcTrade(input: TradeCalcInput): TradeCalcResult {
   }
   const avgEntry = totalEntryQty.isZero() ? null : totalEntryValue.div(totalEntryQty);
   const positionValue = avgEntry ? avgEntry.times(totalEntryQty).times(mult) : null;
+  const stopLoss = safeD(initialStopLoss);
+  let riskAmount: Decimal | null = null;
+  if (avgEntry && stopLoss && !totalEntryQty.isZero()) {
+    const riskPerUnit = avgEntry.minus(stopLoss).abs();
+    if (!riskPerUnit.isZero()) {
+      riskAmount = riskPerUnit.times(totalEntryQty).times(mult);
+    }
+  }
+  const currentBalance = safeD(input.accountCurrentBalance);
+  const startingBalance = safeD(input.accountStartingBalance);
+  const riskBalance = currentBalance?.greaterThan(0)
+    ? currentBalance
+    : startingBalance?.greaterThan(0)
+      ? startingBalance
+      : null;
+  const riskPercentage = riskAmount && riskBalance
+    ? riskAmount.div(riskBalance).times(100)
+    : null;
 
   // Weighted average exit
   let totalExitQty = new Decimal(0);
@@ -110,13 +132,8 @@ export function calcTrade(input: TradeCalcInput): TradeCalcResult {
 
   // Actual R
   let actualR: number | null = null;
-  if (avgEntry && safeD(initialStopLoss) && !realizedQty.isZero()) {
-    const stopD = new Decimal(String(initialStopLoss!));
-    const riskPerUnit = avgEntry.minus(stopD).abs();
-    if (!riskPerUnit.isZero()) {
-      const totalRisk = riskPerUnit.times(totalEntryQty).times(mult);
-      actualR = realizedNetPnl.div(totalRisk).toNumber();
-    }
+  if (riskAmount && !realizedQty.isZero()) {
+    actualR = realizedNetPnl.div(riskAmount).toNumber();
   }
 
   // Timestamps
@@ -137,6 +154,8 @@ export function calcTrade(input: TradeCalcInput): TradeCalcResult {
     avgEntry: avgEntry?.toNumber() ?? null,
     avgExit: avgExit?.toNumber() ?? null,
     positionValue: positionValue?.toNumber() ?? null,
+    riskAmount: riskAmount?.toNumber() ?? null,
+    riskPercentage: riskPercentage?.toNumber() ?? null,
     openPositionSize: openPositionSize.toNumber(),
     realizedQuantity: realizedQty.toNumber(),
     realizedGrossPnl: realizedGrossPnl.toNumber(),

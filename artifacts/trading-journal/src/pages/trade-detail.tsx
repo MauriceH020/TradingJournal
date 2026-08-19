@@ -36,6 +36,10 @@ function formatNumber(val: number | null | undefined, decimals = 2) {
   return new Intl.NumberFormat('en-US', { minimumFractionDigits: decimals, maximumFractionDigits: decimals }).format(val);
 }
 
+function formatPercent(val: number | null | undefined) {
+  return val == null ? '-' : `${formatNumber(val)}%`;
+}
+
 export default function TradeDetail() {
   const [, params] = useRoute('/trades/:id');
   const [, setLocation] = useLocation();
@@ -309,9 +313,17 @@ export default function TradeDetail() {
               <div className="font-mono border-t border-border pt-2">{trade.profitTarget || '-'}</div>
               <div className="font-mono border-t border-border pt-2">{formatNumber(calc.avgExit, 4) || '-'}</div>
 
-              <div className="text-muted-foreground border-t border-border pt-2">Risk</div>
-              <div className="font-mono border-t border-border pt-2">{trade.plannedRisk ? formatCurrency(trade.plannedRisk, currency) : '-'}</div>
+              <div className="text-muted-foreground border-t border-border pt-2">Stop Loss</div>
+              <div className="font-mono border-t border-border pt-2">{formatNumber(trade.initialStopLoss, 4)}</div>
               <div className="font-mono border-t border-border pt-2">-</div>
+
+              <div className="text-muted-foreground border-t border-border pt-2">Risk</div>
+              <div className="font-mono border-t border-border pt-2">{formatCurrency(trade.plannedRisk, currency)}</div>
+              <div className="font-mono border-t border-border pt-2">{formatCurrency(calc.riskAmount, currency)}</div>
+
+              <div className="text-muted-foreground border-t border-border pt-2">Risk %</div>
+              <div className="font-mono border-t border-border pt-2">{formatPercent(trade.plannedRiskPercentage)}</div>
+              <div className="font-mono border-t border-border pt-2">{formatPercent(calc.riskPercentage)}</div>
             </div>
             
             <div className="pt-4 space-y-2">

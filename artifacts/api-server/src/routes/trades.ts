@@ -16,7 +16,7 @@ import { calcTradeWithDates } from "../lib/calc";
 
 const router = Router();
 
-type TradeSortKey = "createdAt" | "openedAt" | "instrument" | "direction" | "size" | "avgEntry" | "avgExit" | "netPnl" | "actualR" | "status";
+type TradeSortKey = "createdAt" | "openedAt" | "instrument" | "direction" | "size" | "avgEntry" | "avgExit" | "netPnl" | "riskAmount" | "riskPercentage" | "actualR" | "status";
 
 // ── LIST ─────────────────────────────────────────────────────────────────────
 router.get("/trades", async (req, res) => {
@@ -80,6 +80,8 @@ router.get("/trades", async (req, res) => {
       initialStopLoss: t.initialStopLoss,
       tradeLevelCostAdjustment: t.tradeLevelCostAdjustment,
       contractMultiplier: row.instrument.contractMultiplier,
+      accountCurrentBalance: row.account.currentBalance,
+      accountStartingBalance: row.account.startingBalance,
     });
 
     // Derive status
@@ -162,6 +164,10 @@ router.get("/trades", async (req, res) => {
         return summary.calculated.avgExit ?? 0;
       case "netPnl":
         return summary.calculated.realizedNetPnl;
+      case "riskAmount":
+        return summary.calculated.riskAmount ?? 0;
+      case "riskPercentage":
+        return summary.calculated.riskPercentage ?? 0;
       case "actualR":
         return summary.calculated.actualR ?? 0;
       case "status":

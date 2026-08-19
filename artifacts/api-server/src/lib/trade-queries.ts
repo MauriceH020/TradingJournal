@@ -114,6 +114,8 @@ export async function getTradeDetail(tradeId: number) {
     initialStopLoss: t.initialStopLoss,
     tradeLevelCostAdjustment: t.tradeLevelCostAdjustment,
     contractMultiplier: trade.instrument.contractMultiplier,
+    accountCurrentBalance: trade.account.currentBalance,
+    accountStartingBalance: trade.account.startingBalance,
   });
 
   // Derive and update status

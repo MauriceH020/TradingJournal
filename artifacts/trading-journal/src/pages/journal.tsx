@@ -16,7 +16,7 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { Filter, Search, ChevronRight, ChevronLeft, ChevronDown, ChevronUp, ArrowDown, ArrowUp, ArrowUpDown } from 'lucide-react';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
 
-type SortKey = 'createdAt' | 'openedAt' | 'instrument' | 'direction' | 'size' | 'avgEntry' | 'avgExit' | 'netPnl' | 'actualR' | 'status';
+type SortKey = 'createdAt' | 'openedAt' | 'instrument' | 'direction' | 'size' | 'avgEntry' | 'avgExit' | 'netPnl' | 'riskAmount' | 'riskPercentage' | 'actualR' | 'status';
 type SortDirection = 'asc' | 'desc';
 
 function SortHeader({
@@ -230,6 +230,8 @@ export default function Journal() {
                 <SortHeader label="Avg Entry" sortKey="avgEntry" currentSortKey={sortKey} currentSortDirection={sortDirection} onSort={handleSort} align="right" />
                 <SortHeader label="Avg Exit" sortKey="avgExit" currentSortKey={sortKey} currentSortDirection={sortDirection} onSort={handleSort} align="right" />
                 <SortHeader label="Net P&L" sortKey="netPnl" currentSortKey={sortKey} currentSortDirection={sortDirection} onSort={handleSort} align="right" />
+                <SortHeader label="Risk" sortKey="riskAmount" currentSortKey={sortKey} currentSortDirection={sortDirection} onSort={handleSort} align="right" />
+                <SortHeader label="Risk %" sortKey="riskPercentage" currentSortKey={sortKey} currentSortDirection={sortDirection} onSort={handleSort} align="right" />
                 <SortHeader label="R" sortKey="actualR" currentSortKey={sortKey} currentSortDirection={sortDirection} onSort={handleSort} align="right" />
                 <SortHeader label="Status" sortKey="status" currentSortKey={sortKey} currentSortDirection={sortDirection} onSort={handleSort} />
                 <th className="px-4 py-3">Actions</th>
@@ -239,12 +241,12 @@ export default function Journal() {
               {isLoading ? (
                 [...Array(5)].map((_, i) => (
                   <tr key={i}>
-                    <td colSpan={11} className="px-4 py-4"><Skeleton className="h-6 w-full" /></td>
+                    <td colSpan={13} className="px-4 py-4"><Skeleton className="h-6 w-full" /></td>
                   </tr>
                 ))
               ) : trades.length === 0 ? (
                 <tr>
-                  <td colSpan={11} className="px-4 py-8 text-center text-muted-foreground">
+                  <td colSpan={13} className="px-4 py-8 text-center text-muted-foreground">
                     No trades found matching filters.
                   </td>
                 </tr>
@@ -275,6 +277,8 @@ export default function Journal() {
                       <td className={`px-4 py-3 text-right font-mono font-bold ${isPos ? 'text-primary' : isNeg ? 'text-destructive' : ''}`}>
                         {formatCurrency(netPnl, currency)}
                       </td>
+                      <td className="px-4 py-3 text-right font-mono">{formatCurrency(trade.calculated?.riskAmount, currency)}</td>
+                      <td className="px-4 py-3 text-right font-mono">{trade.calculated?.riskPercentage != null ? `${formatNumber(trade.calculated.riskPercentage)}%` : '-'}</td>
                       <td className={`px-4 py-3 text-right font-mono ${(trade.calculated?.actualR ?? 0) > 0 ? 'text-primary' : (trade.calculated?.actualR ?? 0) < 0 ? 'text-destructive' : ''}`}>
                         {trade.calculated?.actualR != null ? `${formatNumber(trade.calculated.actualR)}R` : '-'}
                       </td>

@@ -1471,11 +1471,13 @@ components:
     TradeCalculated:
       type: object
       description: Values derived from executions — never stored, always computed
-      required: [avgEntry, positionValue, openPositionSize, realizedGrossPnl, realizedNetPnl, totalCommissions, totalFees, tradeLevelCosts, openedAt]
+      required: [avgEntry, positionValue, riskAmount, riskPercentage, openPositionSize, realizedGrossPnl, realizedNetPnl, totalCommissions, totalFees, tradeLevelCosts, openedAt]
       properties:
         avgEntry: { type: ["number", "null"] }
         avgExit: { type: ["number", "null"] }
         positionValue: { type: ["number", "null"], description: Total entry position notional in the settlement currency }
+        riskAmount: { type: ["number", "null"], description: Maximum loss at the initial stop loss for the executed entry position }
+        riskPercentage: { type: ["number", "null"], description: Risk amount as a percentage of the account balance }
         openPositionSize: { type: number }
         realizedQuantity: { type: number }
         realizedGrossPnl: { type: number }
